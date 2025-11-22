@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Panel</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+        #notificationBox {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            width: 350px;
+            height: 250px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        .notification {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #fee;
+            border-left: 4px solid #933;
+        }
+    </style>
+</head>
+<body>
+
+<h2>User Panel</h2>
+
+<button onclick="placeOrder()">Place Order</button>
+<button onclick="outForDelivery()">Out for Delivery</button>
+<button onclick="delivered()">Delivered</button>
+
+<h3>Live Notifications</h3>
+<div id="notificationBox"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
+<script>
+    const userId = 101; // Logged-in user ID
+
+    const socket = new SockJS('/ws-notifications');
+    const client = Stomp.over(socket);
+
+    client.connect({ login: userId }, function () {
+        console.log("User WS Connected");
+
+        client.subscribe("/user/queue/notifications", function (msg) {
+            const data = JSON.parse(msg.body);
+            addNotification(data.message);
+        });
+    });
+
+    function addNotification(text) {
+        const box = document.getElementById("notificationBox");
+        const div = document.createElement("div");
+        div.className = "notification";
+        div.innerText = text;
+        box.prepend(div);
+    }
+
+    // --- BUTTONS ---
+
+    function placeOrder() {
+        sendNotification({
+            message: "New order placed by user " + userId,
+            recipientRole: "ADMIN"
+        });
+    }
+
+    function outForDelivery() {
+        sendNotification({
+            message: "Driver is out for delivery",
+            recipientRole: "ADMIN"
+        });
+    }
+
+    function delivered() {
+        sendNotification({
+            message: "Your order has been delivered!",
+            recipientRole: "USER",
+            recipientId: userId
+        });
+    }
+
+    function sendNotification(payload) {
+        fetch("/notifications/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).then(r => console.log("Sent:", payload));
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Driver Panel</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+        #notificationBox {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            width: 350px;
+            height: 250px;
+            overflow-y: auto;
+            background: #f4fff4;
+        }
+        .notification {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #e0ffe0;
+            border-left: 4px solid #393;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Driver Panel</h2>
+
+<button onclick="outForDelivery()">Out for Delivery</button>
+<button onclick="delivered()">Delivered</button>
+
+<h3>Live Notifications</h3>
+<div id="notificationBox"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
+<script>
+    const driverId = 201; // Example driver ID
+
+    // Connect WebSocket
+    const socket = new SockJS('/ws-notifications');
+    const client = Stomp.over(socket);
+
+    client.connect({ login: driverId }, function () {
+        console.log("Driver WS Connected");
+
+        // Driver receives notifications targeted to him
+        client.subscribe("/user/queue/notifications", function (msg) {
+            const data = JSON.parse(msg.body);
+            addNotification(data.message);
+        });
+    });
+
+    function addNotification(text) {
+        const box = document.getElementById("notificationBox");
+        const div = document.createElement("div");
+        div.className = "notification";
+        div.innerText = text;
+        box.prepend(div);
+    }
+
+    // BUTTON ACTIONS
+
+    function outForDelivery() {
+        fetch("/notifications/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: "Driver " + driverId + " is out for delivery",
+                recipientRole: "ADMIN"
+            })
+        });
+
+        // (Optional) you can also broadcast to all customers assigned to this driver
+    }
+
+    function delivered() {
+        const customerId = prompt("Enter customer ID to notify:");
+
+        fetch("/notifications/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: "Your package has been delivered!",
+                recipientRole: "USER",
+                recipientId: parseInt(customerId)
+            })
+        });
+
+        // Admin also gets notified
+        fetch("/notifications/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: "Driver " + driverId + " marked order delivered",
+                recipientRole: "ADMIN"
+            })
+        });
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+        #notificationBox {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            width: 350px;
+            height: 250px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        .notification {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #eef;
+            border-left: 4px solid #339;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Admin Panel</h2>
+
+<button onclick="assignRoute()">Assign Route</button>
+<button onclick="driverDelivered()">Mark Delivered</button>
+
+<h3>Live Notifications</h3>
+<div id="notificationBox"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
+<script>
+    // Connect WebSocket
+    const socket = new SockJS('/ws-notifications');
+    const client = Stomp.over(socket);
+
+    client.connect({}, function () {
+        console.log("Admin WS Connected");
+
+        client.subscribe("/topic/admin", function (msg) {
+            const data = JSON.parse(msg.body);
+            addNotification(data.message);
+        });
+    });
+
+    function addNotification(text) {
+        const box = document.getElementById("notificationBox");
+        const div = document.createElement("div");
+        div.className = "notification";
+        div.innerText = text;
+        box.prepend(div);
+    }
+
+    // --- BUTTON ACTIONS (Send fake notifications) ---
+
+    function assignRoute() {
+        sendNotification({
+            message: "Admin assigned route to driver!",
+            recipientRole: "USER",
+            recipientId: 101
+        });
+    }
+
+    function driverDelivered() {
+        sendNotification({
+            message: "Driver marked order as delivered!",
+            recipientRole: "ADMIN"
+        });
+    }
+
+    function sendNotification(payload) {
+        fetch("/notifications/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).then(r => console.log("Sent:", payload));
+    }
+</script>
+
+</body>
+</html>
