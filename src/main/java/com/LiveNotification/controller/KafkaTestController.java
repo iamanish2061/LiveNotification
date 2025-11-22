@@ -1,23 +1,26 @@
 package com.LiveNotification.controller;
 
+import com.LiveNotification.entity.Notification;
 import com.LiveNotification.kafka.KafkaProducer;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/test")
-@RequiredArgsConstructor
 public class KafkaTestController {
 
-    private final KafkaProducer kafkaProducer;
+    private final KafkaProducer producer;
 
-    @GetMapping("/send/{msg}")
-    public String send(@PathVariable String msg){
-        kafkaProducer.sendMessage("test-topic", msg);
-        return "Sent: "+msg;
+    public KafkaTestController(KafkaProducer producer) {
+        this.producer = producer;
+    }
+
+    @PostMapping("/send")
+    public String sendTestNotification() {
+        Notification n = new Notification();
+        n.setMessage("Hello Admin!");
+        n.setRecipientRole(Notification.RecipientRole.ADMIN);
+        producer.sendNotification(n);
+        return "Notification sent!";
     }
 
 }
