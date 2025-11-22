@@ -18,7 +18,7 @@ public class Notification {
 
     private Long recipientId; // nullable if role is generic (e.g., ADMIN)
 
-    private boolean read = false;
+    private boolean hasRead = false;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -33,7 +33,7 @@ public class Notification {
         this.message = message;
         this.recipientRole = recipientRole;
         this.recipientId = recipientId;
-        this.read = read;
+        this.hasRead = read;
         this.createdAt = createdAt;
     }
 
@@ -72,12 +72,12 @@ public class Notification {
         this.recipientId = recipientId;
     }
 
-    public boolean isRead() {
-        return read;
+    public boolean isHasRead() {
+        return hasRead;
     }
 
-    public void setRead(boolean read) {
-        this.read = read;
+    public void setHasRead(boolean hasRead) {
+        this.hasRead = hasRead;
     }
 
     public LocalDateTime getCreatedAt() {
