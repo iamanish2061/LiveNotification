@@ -13,6 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry config) {
         // simple in-memory broker for demo; destination prefixes clients will subscribe to:
         config.enableSimpleBroker("/topic", "/queue");
+        config.setUserDestinationPrefix("/user");
         // for messages sent from client to server:
         config.setApplicationDestinationPrefixes("/app");
     }
