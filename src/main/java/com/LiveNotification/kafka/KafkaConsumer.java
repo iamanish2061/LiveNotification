@@ -17,7 +17,17 @@ public class KafkaConsumer {
     @KafkaListener(topics = "thecutlab",
     groupId = "notification-group")
     public void listen(Notification notification){
-        template.convertAndSend("/topic/notifications", notification);
+        // Admin broadcast
+        if (notification.getRecipientRole() == Notification.RecipientRole.ADMIN) {
+            template.convertAndSend("/topic/admin", notification);
+        }
+        else {  // User-specific notification
+            template.convertAndSendToUser(
+                    notification.getRecipientId().toString(),
+                    "/queue/notifications",
+                    notification
+            );
+        }
     }
 
 }
